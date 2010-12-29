@@ -2,6 +2,7 @@
 #
 # Newline Madness, a plugin for gedit
 # Change newline type for the current document
+# v0.1.0
 #
 # Requires gedit 2.29.5 or above
 #
@@ -9,6 +10,7 @@
 # http://code.google.com/p/gedit-autotab/
 #
 # Copyright (C) 2010 Jeffery To <jeffery.to@gmail.com>
+# https://github.com/jefferyto/gedit-newline-madness
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
