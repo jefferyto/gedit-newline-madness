@@ -1,0 +1,26 @@
+Newline Madness, a plugin for gedit
+Change newline type for the current document
+v0.1.0
+
+This adds a new submenu at Edit > Change Line Endings to change newline
+type for the current document. Note that this currently cannot be
+undone with Undo.
+
+The current newline type is also shown in the statusbar.
+
+Requires gedit 2.29.5 or above
+
+Based in part on Auto Tab by Kristoffer Lundén and Lars Uebernickel:
+http://code.google.com/p/gedit-autotab/
+
+Copyright (C) 2010 Jeffery To <jeffery.to@gmail.com>
+https://github.com/jefferyto/gedit-newline-madness
+
+Available under GNU General Public License version 3
+
+
+
+I've only tested this in my own environment (gedit 2.30.2, GTK+ 2.20.0,
+Ubuntu 10.04), so incompatibilities / bugs are very possible!
+
+Please send bug reports to <jeffery.to@gmail.com>.
