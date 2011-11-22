@@ -1,10 +1,10 @@
-[Gedit Plugin]
+[Plugin]
 Loader=python
 Module=newline-madness
-IAge=2
+IAge=3
 Name=Newline Madness
 Description=Change newline type for the current document
 Authors=Jeffery To <jeffery.to@gmail.com>
-Copyright=Copyright © 2010 Jeffery To <jeffery.to@gmail.com>
+Copyright=Copyright © 2010-2011 Jeffery To
 Website=https://github.com/jefferyto/gedit-newline-madness
-Version=0.1.0
+Version=0.2.0
