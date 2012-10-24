@@ -44,6 +44,30 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 	window = GObject.property(type=Gedit.Window)
 
+	HANDLER_IDS = 'NewlineMadnessPluginHandlerIds'
+
+	LINE_ENDINGS = {
+		Gedit.DocumentNewlineType.LF: {
+			'name': 'NewlineMadnessPluginToLF',
+			'label': _('Unix/Linux'),
+			'tooltip': _('Change the document to use Unix/Linux line endings')
+		},
+		Gedit.DocumentNewlineType.CR: {
+			'name': 'NewlineMadnessPluginToCR',
+			'label': _('Mac OS Classic'),
+			'tooltip': _('Change the document to use Mac OS Classic line endings')
+		},
+		Gedit.DocumentNewlineType.CR_LF: {
+			'name': 'NewlineMadnessPluginToCRLF',
+			'label': _('Windows'),
+			'tooltip': _('Change the document to use Windows line endings')
+		}
+	}
+
+
+
+	# Plugin interface
+
 	def __init__(self):
 		GObject.Object.__init__(self)
 
@@ -51,38 +75,27 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		window = self.window
 
 		# Set up menu
-		action_group = Gtk.ActionGroup('NewlineMadnessPluginActions')
-		action_group.add_actions([
-			('NewlineMadnessPluginMenu',
-				None,
-				_('Change Line Endings'),
-				None,
-				None,
-				None),
-			('NewlineMadnessPluginToLF',
-				None,
-				_('Unix/Linux'),
-				None,
-				_('Change the document to use Unix/Linux line endings'),
-				lambda a: self.change_newline(Gedit.DocumentNewlineType.LF)),
-			('NewlineMadnessPluginToCR',
-				None,
-				_('Mac OS Classic'),
-				None,
-				_('Change the document to use Mac OS Classic line endings'),
-				lambda a: self.change_newline(Gedit.DocumentNewlineType.CR)),
-			('NewlineMadnessPluginToCRLF',
-				None,
-				_('Windows'),
-				None,
-				_('Change the document to use Windows line endings'),
-				lambda a: self.change_newline(Gedit.DocumentNewlineType.CR_LF))
-		])
+		menu_action_group = Gtk.ActionGroup('NewlineMadnessPluginMenuActions')
+		action = Gtk.Action('NewlineMadnessPluginMenu', _('Change Line Endings'), None, None)
+		menu_action_group.add_action(action)
+
+		newline_action_group = Gtk.ActionGroup('NewlineMadnessPluginNewlineActions')
+		first_action = None
+		for key, props in self.LINE_ENDINGS.iteritems():
+			action = Gtk.RadioAction(props['name'], props['label'], props['tooltip'], None, key)
+			newline_action_group.add_action_with_accel(action, None)
+
+			if first_action is None:
+				first_action = action
+			else:
+				action.join_group(first_action)
+
+			self.connect_handlers(action, ('activate',), 'menu_action')
 
 		manager = window.get_ui_manager()
-		manager.insert_action_group(action_group, -1)
+		manager.insert_action_group(menu_action_group, -1)
+		manager.insert_action_group(newline_action_group, -1)
 		ui_id = manager.add_ui_from_string(ui_str)
-		window.set_data('NewlineMadnessPluginUIId', ui_id)
 
 		# Prime the statusbar
 		statusbar = window.get_statusbar()
@@ -92,64 +105,126 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		statusbar.pack_end(sb_frame, False, False, 0)
 		sb_frame.show_all()
 
-		for view in window.get_views(): 
-			self.connect_handlers(view)
-
+		self._ui_id = ui_id
 		self._sb_frame = sb_frame
 		self._sb_label = sb_label
-		self._action_group = action_group
+		self._menu_action_group = menu_action_group
+		self._newline_action_group = newline_action_group
 
-		tab_added_id = window.connect('tab_added', lambda w, t: self.connect_handlers(t.get_view()))
-		window.set_data('NewlineMadnessPluginHandlerId', tab_added_id)
+		for doc in window.get_documents(): 
+			self.window_tab_added(window, Gedit.Tab.get_from_document(doc))
+
+		self.connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed'), 'window')
+		self.connect_handlers(window, ('notify::state',), self.sync_window_state)
 
 		self.do_update_state()
 
 	def do_deactivate(self):
 		window = self.window
 
-		ui_id = window.get_data('NewlineMadnessPluginUIId')
+		self.disconnect_handlers(window)
+
+		for doc in window.get_documents(): 
+			self.window_tab_removed(window, Gedit.Tab.get_from_document(doc))
+
+		for action in self._newline_action_group.list_actions():
+			self.disconnect_handlers(action)
+
 		manager = window.get_ui_manager()
-		manager.remove_ui(ui_id)
-		manager.remove_action_group(self._action_group)
+		manager.remove_ui(self._ui_id)
+		manager.remove_action_group(self._newline_action_group)
+		manager.remove_action_group(self._menu_action_group)
 		manager.ensure_update()
-
-		tab_added_id = window.get_data('NewlineMadnessPluginHandlerId')
-		window.disconnect(tab_added_id)
-		window.set_data('NewlineMadnessPluginHandlerId', None)
-
-		for view in window.get_views():
-			self.disconnect_handlers(view)
 
 		super(Gtk.Container, window.get_statusbar()).remove(self._sb_frame)
 
+		self._ui_id = None
 		self._sb_frame = None
 		self._sb_label = None
-		self._action_group = None
+		self._menu_action_group = None
+		self._newline_action_group = None
 
 	def do_update_state(self):
+		self.set_sensitivity_according_to_window_state()
+		self.set_sensitivity_according_to_tab()
+		self.update_newline_menu()
+		self.update_status(self.window.get_active_document(), None)
+
+
+
+	# Callbacks
+
+	def window_active_tab_changed(self, window, tab):
+		self.set_sensitivity_according_to_tab()
+		self.update_newline_menu()
+
+	def window_active_tab_state_changed(self, window):
+		self.set_sensitivity_according_to_tab()
+
+	def window_tab_added(self, window, tab):
+		doc = tab.get_document()
+		self.connect_handlers(doc, ('notify::newline-type',), self.sync_newline_menu)
+		self.connect_handlers(doc, ('notify::newline-type',), self.update_status) # XXX
+
+	def window_tab_removed(self, window, tab):
+		self.disconnect_handlers(tab.get_document())
+
+	def sync_window_state(self, window, pspec):
+		self.set_sensitivity_according_to_window_state()
+
+	def sync_newline_menu(self, doc, pspec):
+		self.update_newline_menu()
+
+	def menu_action_activate(self, action):
 		doc = self.window.get_active_document()
-		self._action_group.set_sensitive(doc != None and not doc.get_readonly())
-		self.update_status(doc, None)
+		if doc and action.get_active():
+			self.set_document_newline(doc, action.get_current_value())
 
-	def connect_handlers(self, view):
-		doc = view.get_buffer()
-		newline_id = doc.connect('notify::newline-type', self.update_status)
-		doc.set_data('NewlineMadnessPluginHandlerId', newline_id)
 
-	def disconnect_handlers(self, view):
-		doc = view.get_buffer()
-		newline_id = doc.get_data('NewlineMadnessPluginHandlerId')
-		doc.disconnect(newline_id)
-		doc.set_data('NewlineMadnessPluginHandlerId', None)
 
-	def change_newline(self, nl):
+	# Doers
+
+	def set_sensitivity_according_to_window_state(self):
+		window = self.window
+		action_group = self._menu_action_group
+		sensitive = action_group.get_sensitive()
+
+		if (window.get_state() & Gedit.WindowState.SAVING_SESSION) != 0:
+			if sensitive:
+				action_group.set_sensitive(False)
+		else:
+			if not sensitive:
+				action_group.set_sensitive(window.get_active_tab() is not None)
+
+	def set_sensitivity_according_to_tab(self):
+		tab = self.window.get_active_tab()
+		state_normal = tab is not None and tab.get_state() is Gedit.TabState.STATE_NORMAL
+		editable = tab is not None and tab.get_view().get_editable()
+		action = self._menu_action_group.get_action('NewlineMadnessPluginMenu')
+		action.set_sensitive(state_normal and editable)
+
+	def update_newline_menu(self):
 		doc = self.window.get_active_document()
 
 		if doc:
-			doc.set_property('newline-type', nl)
-			doc.set_modified(True)
+			action_group = self._newline_action_group
+			actions = action_group.list_actions()
+			newline = doc.get_property('newline-type')
 
-	# Statusbar message
+			for key, props in self.LINE_ENDINGS.iteritems():
+				if key is newline:
+					name = props['name']
+
+			# prevent recursion
+			for action in actions:
+				self.block_handlers(action)
+
+			action = action_group.get_action(name)
+			action.set_active(True)
+
+			for action in actions:
+				self.unblock_handlers(action)
+
 	def update_status(self, doc, pspec):
 		sb_label = self._sb_label
 
@@ -167,3 +242,46 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 		else:
 			sb_label.hide()
+
+	def set_document_newline(self, doc, newline):
+		if doc:
+			doc.set_property('newline-type', newline)
+			doc.set_modified(True)
+
+
+
+	# Utilities
+
+	def connect_handlers(self, obj, signals, m, *args):
+		HANDLER_IDS = self.HANDLER_IDS
+		l_ids = getattr(obj, HANDLER_IDS) if hasattr(obj, HANDLER_IDS) else []
+
+		for signal in signals:
+			if type(m).__name__ == 'str':
+				method = getattr(self, m + '_' + signal.replace('-', '_'))
+			else:
+				method = m
+			l_ids.append(obj.connect(signal, method, *args))
+
+		setattr(obj, HANDLER_IDS, l_ids)
+
+	def disconnect_handlers(self, obj):
+		HANDLER_IDS = self.HANDLER_IDS
+		if hasattr(obj, HANDLER_IDS):
+			for l_id in getattr(obj, HANDLER_IDS):
+				obj.disconnect(l_id)
+
+			delattr(obj, HANDLER_IDS)
+
+	def block_handlers(self, obj):
+		HANDLER_IDS = self.HANDLER_IDS
+		if hasattr(obj, HANDLER_IDS):
+			for l_id in getattr(obj, HANDLER_IDS):
+				obj.handler_block(l_id)
+
+	def unblock_handlers(self, obj):
+		HANDLER_IDS = self.HANDLER_IDS
+		if hasattr(obj, HANDLER_IDS):
+			for l_id in getattr(obj, HANDLER_IDS):
+				obj.handler_unblock(l_id)
+
