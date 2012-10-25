@@ -19,14 +19,14 @@ gedit 2 users should use [v0.1.0][] (requires at least gedit 2.29.5).
 1.  Download the source code (as [zip][] or [tar.gz][]) and extract.
 2.  Copy `newline-madness.plugin` and the `newline-madness` folder into
     `~/.local/share/gedit/plugins` (create if it does not exist).
-3.  Restart gedit, select `Edit > Preferences`, and enable the plugin
-    in the `Plugins` tab.
+3.  Restart gedit, select **Edit > Preferences**, and enable the plugin
+    in the **Plugins** tab.
 
 ## Usage ##
 
 To select a newline type for the current document, either:
 
-*   Select `Edit > Change Line Endings`; or
+*   Select **Edit > Change Line Endings**; or
 *   Click on the line ending selector in the statusbar, between the tab
     width selector and cursor position information.
 
