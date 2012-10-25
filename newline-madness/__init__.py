@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# Newline Madness, a plugin for gedit
-# Change newline type for the current document
-# v0.2.0
+# __init__.py
+# This file is part of Newline Madness, a plugin for gedit
 #
-# Copyright (C) 2010-2011 Jeffery To <jeffery.to@gmail.com>
+# Copyright (C) 2010-2012 Jeffery To <jeffery.to@gmail.com>
 # https://github.com/jefferyto/gedit-newline-madness
 #
 # This program is free software: you can redistribute it and/or modify
@@ -22,6 +21,7 @@
 
 from gi.repository import GObject, Gtk, Gedit
 from gettext import gettext as _
+from statuscombobox import StatusComboBox
 
 ui_str = '''
 <ui>
@@ -45,6 +45,8 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 	window = GObject.property(type=Gedit.Window)
 
 	HANDLER_IDS = 'NewlineMadnessPluginHandlerIds'
+
+	LINE_ENDING_DATA = 'NewlineMadnessPluginLineEndingData'
 
 	LINE_ENDINGS = {
 		Gedit.DocumentNewlineType.LF: {
@@ -74,48 +76,55 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 	def do_activate(self):
 		window = self.window
 
-		# Set up menu
-		menu_action_group = Gtk.ActionGroup('NewlineMadnessPluginMenuActions')
+		# Menu
+		action_group = Gtk.ActionGroup('NewlineMadnessPluginActions')
 		action = Gtk.Action('NewlineMadnessPluginMenu', _('Change Line Endings'), None, None)
-		menu_action_group.add_action(action)
+		action_group.add_action(action)
+		menu_action = action
 
-		newline_action_group = Gtk.ActionGroup('NewlineMadnessPluginNewlineActions')
 		first_action = None
 		for key, props in self.LINE_ENDINGS.iteritems():
 			action = Gtk.RadioAction(props['name'], props['label'], props['tooltip'], None, key)
-			newline_action_group.add_action_with_accel(action, None)
+			action_group.add_action_with_accel(action, None)
 
 			if first_action is None:
 				first_action = action
 			else:
 				action.join_group(first_action)
 
-			self.connect_handlers(action, ('activate',), 'menu_action')
+			self.connect_handlers(action, ('activate',), 'action')
 
 		manager = window.get_ui_manager()
-		manager.insert_action_group(menu_action_group, -1)
-		manager.insert_action_group(newline_action_group, -1)
+		manager.insert_action_group(action_group, -1)
 		ui_id = manager.add_ui_from_string(ui_str)
 
-		# Prime the statusbar
+		# Combo
+		combo = StatusComboBox()
+		combo.show()
 		statusbar = window.get_statusbar()
-		sb_frame = Gtk.Frame()
-		sb_label = Gtk.Label()
-		sb_frame.add(sb_label)
-		statusbar.pack_end(sb_frame, False, False, 0)
-		sb_frame.show_all()
+		combo.clone_padding_from_gedit_status_combo_box(statusbar)
+		statusbar.pack_end(combo, False, True, 0)
+		statusbar.reorder_child(combo, 5)
+
+		for key, props in self.LINE_ENDINGS.iteritems():
+			item = Gtk.MenuItem(props['label'])
+			setattr(item, self.LINE_ENDING_DATA, key)
+
+			combo.add_item(item, props['label'])
+
+			item.show()
+
+		self.connect_handlers(combo, ('changed',), 'combo')
 
 		self._ui_id = ui_id
-		self._sb_frame = sb_frame
-		self._sb_label = sb_label
-		self._menu_action_group = menu_action_group
-		self._newline_action_group = newline_action_group
+		self._menu_action = menu_action
+		self._action_group = action_group
+		self._combo = combo
 
 		for doc in window.get_documents(): 
 			self.window_tab_added(window, Gedit.Tab.get_from_document(doc))
 
-		self.connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed'), 'window')
-		self.connect_handlers(window, ('notify::state',), self.sync_window_state)
+		self.connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed', 'notify::state'), 'window')
 
 		self.do_update_state()
 
@@ -127,93 +136,96 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		for doc in window.get_documents(): 
 			self.window_tab_removed(window, Gedit.Tab.get_from_document(doc))
 
-		for action in self._newline_action_group.list_actions():
+		self.disconnect_handlers(self._combo)
+		super(Gtk.Container, window.get_statusbar()).remove(self._combo)
+
+		for action in self._action_group.list_actions():
 			self.disconnect_handlers(action)
 
 		manager = window.get_ui_manager()
 		manager.remove_ui(self._ui_id)
-		manager.remove_action_group(self._newline_action_group)
-		manager.remove_action_group(self._menu_action_group)
+		manager.remove_action_group(self._action_group)
 		manager.ensure_update()
 
-		super(Gtk.Container, window.get_statusbar()).remove(self._sb_frame)
-
 		self._ui_id = None
-		self._sb_frame = None
-		self._sb_label = None
-		self._menu_action_group = None
-		self._newline_action_group = None
+		self._menu_action = None
+		self._action_group = None
+		self._combo = None
 
 	def do_update_state(self):
-		self.set_sensitivity_according_to_window_state()
-		self.set_sensitivity_according_to_tab()
-		self.update_newline_menu()
-		self.update_status(self.window.get_active_document(), None)
+		self.set_sensitivity()
+		self.update_ui()
 
 
 
 	# Callbacks
 
 	def window_active_tab_changed(self, window, tab):
-		self.set_sensitivity_according_to_tab()
-		self.update_newline_menu()
+		self.set_sensitivity()
+		self.update_ui()
 
 	def window_active_tab_state_changed(self, window):
-		self.set_sensitivity_according_to_tab()
+		self.set_sensitivity()
 
 	def window_tab_added(self, window, tab):
-		doc = tab.get_document()
-		self.connect_handlers(doc, ('notify::newline-type',), self.sync_newline_menu)
-		self.connect_handlers(doc, ('notify::newline-type',), self.update_status) # XXX
+		self.connect_handlers(tab.get_document(), ('notify::newline-type',), 'doc')
 
 	def window_tab_removed(self, window, tab):
 		self.disconnect_handlers(tab.get_document())
 
-	def sync_window_state(self, window, pspec):
-		self.set_sensitivity_according_to_window_state()
+	def window_notify_state(self, window, prop):
+		self.set_sensitivity()
 
-	def sync_newline_menu(self, doc, pspec):
-		self.update_newline_menu()
+	def doc_notify_newline_type(self, doc, prop):
+		self.update_ui()
 
-	def menu_action_activate(self, action):
+	def action_activate(self, action):
 		doc = self.window.get_active_document()
 		if doc and action.get_active():
 			self.set_document_newline(doc, action.get_current_value())
+
+	def combo_changed(self, combo, item):
+		doc = self.window.get_active_document()
+		if doc:
+			self.set_document_newline(doc, getattr(item, self.LINE_ENDING_DATA))
 
 
 
 	# Doers
 
-	def set_sensitivity_according_to_window_state(self):
+	def set_sensitivity(self):
 		window = self.window
-		action_group = self._menu_action_group
-		sensitive = action_group.get_sensitive()
+		tab = window.get_active_tab()
+		combo = self._combo
+		sensitive = False
 
-		if (window.get_state() & Gedit.WindowState.SAVING_SESSION) != 0:
-			if sensitive:
-				action_group.set_sensitive(False)
+		if tab:
+			not_window_saving_session = (window.get_state() & Gedit.WindowState.SAVING_SESSION) == 0
+			tab_state_normal = tab.get_state() is Gedit.TabState.STATE_NORMAL
+			tab_editable = tab.get_view().get_editable()
+
+			sensitive = not_window_saving_session and tab_state_normal and tab_editable
+
+		self._menu_action.set_sensitive(sensitive)
+		combo.set_sensitive(sensitive)
+		if tab:
+			combo.show()
 		else:
-			if not sensitive:
-				action_group.set_sensitive(window.get_active_tab() is not None)
+			combo.hide()
 
-	def set_sensitivity_according_to_tab(self):
-		tab = self.window.get_active_tab()
-		state_normal = tab is not None and tab.get_state() is Gedit.TabState.STATE_NORMAL
-		editable = tab is not None and tab.get_view().get_editable()
-		action = self._menu_action_group.get_action('NewlineMadnessPluginMenu')
-		action.set_sensitive(state_normal and editable)
-
-	def update_newline_menu(self):
+	def update_ui(self):
 		doc = self.window.get_active_document()
 
 		if doc:
-			action_group = self._newline_action_group
-			actions = action_group.list_actions()
 			newline = doc.get_property('newline-type')
 
 			for key, props in self.LINE_ENDINGS.iteritems():
 				if key is newline:
 					name = props['name']
+
+			# Menu
+			action_group = self._action_group
+			actions = action_group.list_actions()
 
 			# prevent recursion
 			for action in actions:
@@ -225,23 +237,15 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 			for action in actions:
 				self.unblock_handlers(action)
 
-	def update_status(self, doc, pspec):
-		sb_label = self._sb_label
+			# Combo
+			combo = self._combo
 
-		if doc:
-			nl = doc.get_property('newline-type')
-
-			if nl == Gedit.DocumentNewlineType.LF:
-				sb_label.set_text(_('Unix/Linux'))
-			if nl == Gedit.DocumentNewlineType.CR:
-				sb_label.set_text(_('Mac OS Classic'))
-			if nl == Gedit.DocumentNewlineType.CR_LF:
-				sb_label.set_text(_('Windows'))
-
-			sb_label.show()
-
-		else:
-			sb_label.hide()
+			for item in combo.get_items():
+				if getattr(item, self.LINE_ENDING_DATA) == newline:
+					self.block_handlers(combo)
+					combo.set_item(item)
+					self.unblock_handlers(combo)
+					break
 
 	def set_document_newline(self, doc, newline):
 		if doc:
@@ -258,7 +262,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 		for signal in signals:
 			if type(m).__name__ == 'str':
-				method = getattr(self, m + '_' + signal.replace('-', '_'))
+				method = getattr(self, m + '_' + signal.replace('-', '_').replace('::', '_'))
 			else:
 				method = m
 			l_ids.append(obj.connect(signal, method, *args))
