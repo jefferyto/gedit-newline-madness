@@ -4,13 +4,13 @@ Change newline type for the current document
 <https://github.com/jefferyto/gedit-newline-madness>  
 v0.3.1
 
-All bug reports, feature requests and miscellaneous comments are
-welcome at <https://github.com/jefferyto/gedit-newline-madness/issues>.
+All bug reports, feature requests and miscellaneous comments are welcome
+at <https://github.com/jefferyto/gedit-newline-madness/issues>.
 
 ## Requirements ##
 
-v0.2.0 and higher requires at least gedit 3.2. (Untested with gedit
-3.0; it *may* work :-) )
+v0.2.0 and higher requires at least gedit 3.2. (Untested with gedit 3.0;
+it *may* work :-) )
 
 gedit 2 users should use [v0.1.0][] (requires at least gedit 2.29.5).
 
