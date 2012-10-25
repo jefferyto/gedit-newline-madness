@@ -1,3 +1,7 @@
+v0.3.0: ():
+* Current newline type highlighted in submenu
+* Newline type selectable from statusbar
+
 v0.2.0: (2011-11-22):
 * Works with, and requires, gedit 3.2
 
