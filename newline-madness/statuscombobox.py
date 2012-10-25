@@ -91,7 +91,11 @@ padding: 1px 8px 2px 4px;
 
 		self._hbox.pack_start(self._item, True, True, 0)
 
-		self._arrow = Gtk.Arrow(Gtk.ArrowType.DOWN, Gtk.ShadowType.NONE)
+		try:
+			self._arrow = Gtk.Arrow(Gtk.ArrowType.DOWN, Gtk.ShadowType.NONE)
+		except TypeError:
+			self._arrow = Gtk.Arrow()
+			self._arrow.set(Gtk.ArrowType.DOWN, Gtk.ShadowType.NONE)
 		self._arrow.show()
 
 		self._hbox.pack_start(self._arrow, False, True, 0)
