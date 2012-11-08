@@ -5,7 +5,7 @@ Change newline type for the current document
 v0.3.1
 
 All bug reports, feature requests and miscellaneous comments are welcome
-at <https://github.com/jefferyto/gedit-newline-madness/issues>.
+at the [project issue tracker][].
 
 ## Requirements ##
 
@@ -47,7 +47,8 @@ Copyright &copy; 2010-2012 Jeffery To <jeffery.to@gmail.com>
 Available under GNU General Public License version 3
 
 
-[v0.1.0]: https://github.com/jefferyto/gedit-newline-madness/zipball/v0.1.0
-[zip]: https://github.com/jefferyto/gedit-newline-madness/zipball/master
-[tar.gz]: https://github.com/jefferyto/gedit-newline-madness/tarball/master
+[project issue tracker]: https://github.com/jefferyto/gedit-newline-madness/issues
+[zip]: https://github.com/jefferyto/gedit-newline-madness/archive/master.zip
+[tar.gz]: https://github.com/jefferyto/gedit-newline-madness/archive/master.tar.gz
+[v0.1.0]: https://github.com/jefferyto/gedit-newline-madness/archive/v0.1.0.zip
 [Auto Tab]: http://code.google.com/p/gedit-autotab/
