@@ -1,3 +1,6 @@
+v0.3.2: (2013-04-26):
+* Bug fix: use normal Python attributes instead of get_data/set_data
+
 v0.3.1: (2012-10-25):
 * Bug fix: Gtk.Arrow() can't decide if it takes 2 arguments or 0
 

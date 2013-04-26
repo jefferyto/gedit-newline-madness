@@ -147,7 +147,7 @@ padding: 1px 8px 2px 4px;
 		super(StatusComboBox, self).do_destroy()
 
 	def do_changed(self, item):
-		text = item.get_data(self.COMBO_BOX_TEXT_DATA)
+		text = getattr(item, self.COMBO_BOX_TEXT_DATA)
 		if text:
 			self._item.set_markup(text)
 			self._current_item = item
@@ -255,13 +255,13 @@ padding: 1px 8px 2px 4px;
 		if not isinstance(item, Gtk.MenuItem):
 			return None
 
-		return item.get_data(self.COMBO_BOX_TEXT_DATA)
+		return getattr(item, self.COMBO_BOX_TEXT_DATA)
 
 	def set_item_text(self, item, text):
 		if not isinstance(item, Gtk.MenuItem):
 			return
 
-		item.set_data(self.COMBO_BOX_TEXT_DATA, text)
+		setattr(item, self.COMBO_BOX_TEXT_DATA, text)
 
 	def set_item(self, item):
 		if not isinstance(item, Gtk.MenuItem):
