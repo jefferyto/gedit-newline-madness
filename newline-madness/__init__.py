@@ -3,7 +3,7 @@
 # __init__.py
 # This file is part of Newline Madness, a plugin for gedit
 #
-# Copyright (C) 2010-2012 Jeffery To <jeffery.to@gmail.com>
+# Copyright (C) 2010-2013 Jeffery To <jeffery.to@gmail.com>
 # https://github.com/jefferyto/gedit-newline-madness
 #
 # This program is free software: you can redistribute it and/or modify
