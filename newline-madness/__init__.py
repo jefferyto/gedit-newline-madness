@@ -60,7 +60,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		menu_action = action
 
 		first_action = None
-		for key, props in self.LINE_ENDINGS.iteritems():
+		for key, props in self.LINE_ENDINGS.items():
 			label = props['label']
 			action = Gtk.RadioAction(props['name'], label, _("Change the document to use %s line endings") % label, None, key)
 			action_group.add_action_with_accel(action, None)
@@ -99,7 +99,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		statusbar.pack_end(combo, False, True, 0)
 		statusbar.reorder_child(combo, 5)
 
-		for key, props in self.LINE_ENDINGS.iteritems():
+		for key, props in self.LINE_ENDINGS.items():
 			label = props['label']
 			item = Gtk.MenuItem(label)
 			setattr(item, self.LINE_ENDING_DATA, key)
@@ -205,7 +205,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		if doc:
 			newline = doc.get_property('newline-type')
 
-			for key, props in self.LINE_ENDINGS.iteritems():
+			for key, props in self.LINE_ENDINGS.items():
 				if key is newline:
 					name = props['name']
 
