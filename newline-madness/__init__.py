@@ -34,18 +34,15 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 	LINE_ENDINGS = {
 		Gedit.DocumentNewlineType.LF: {
 			'name': 'NewlineMadnessPluginToLF',
-			'label': _('Unix/Linux'),
-			'tooltip': _('Change the document to use Unix/Linux line endings')
+			'label': _("Unix/Linux")
 		},
 		Gedit.DocumentNewlineType.CR: {
 			'name': 'NewlineMadnessPluginToCR',
-			'label': _('Mac OS Classic'),
-			'tooltip': _('Change the document to use Mac OS Classic line endings')
+			'label': _("Mac OS Classic")
 		},
 		Gedit.DocumentNewlineType.CR_LF: {
 			'name': 'NewlineMadnessPluginToCRLF',
-			'label': _('Windows'),
-			'tooltip': _('Change the document to use Windows line endings')
+			'label': _("Windows")
 		}
 	}
 
@@ -58,13 +55,14 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		# Menu
 		action_group = Gtk.ActionGroup('NewlineMadnessPluginActions')
 		action_group.set_translation_domain('gedit')
-		action = Gtk.Action('NewlineMadnessPluginMenu', _('Change Line Endings'), None, None)
+		action = Gtk.Action('NewlineMadnessPluginMenu', _("Change Line Endings"), None, None)
 		action_group.add_action(action)
 		menu_action = action
 
 		first_action = None
 		for key, props in self.LINE_ENDINGS.iteritems():
-			action = Gtk.RadioAction(props['name'], props['label'], props['tooltip'], None, key)
+			label = props['label']
+			action = Gtk.RadioAction(props['name'], label, _("Change the document to use %s line endings") % label, None, key)
 			action_group.add_action_with_accel(action, None)
 
 			if first_action is None:
@@ -74,21 +72,20 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 			self._connect_handlers(action, ('activate',), 'action')
 
-		ui_str = '''
-		<ui>
-			<menubar name="MenuBar">
-				<menu name="EditMenu" action="Edit">
-					<placeholder name="EditOps_6">
-						<menu name="NewlineMadnessPluginMenu" action="NewlineMadnessPluginMenu">
-							<menuitem name="NewlineMadnessPluginToLF" action="NewlineMadnessPluginToLF" />
-							<menuitem name="NewlineMadnessPluginToCR" action="NewlineMadnessPluginToCR" />
-							<menuitem name="NewlineMadnessPluginToCRLF" action="NewlineMadnessPluginToCRLF" />
-						</menu>
-					</placeholder>
-				</menu>
-			</menubar>
-		</ui>
-		'''
+		ui_str = """
+			<ui>
+				<menubar name="MenuBar">
+					<menu name="EditMenu" action="Edit">
+						<placeholder name="EditOps_6">
+							<menu name="NewlineMadnessPluginMenu" action="NewlineMadnessPluginMenu">
+								<menuitem name="NewlineMadnessPluginToLF" action="NewlineMadnessPluginToLF" />
+								<menuitem name="NewlineMadnessPluginToCR" action="NewlineMadnessPluginToCR" />
+								<menuitem name="NewlineMadnessPluginToCRLF" action="NewlineMadnessPluginToCRLF" />
+							</menu>
+						</placeholder>
+					</menu>
+				</menubar>
+			</ui>"""
 
 		manager = window.get_ui_manager()
 		manager.insert_action_group(action_group, -1)
@@ -103,10 +100,11 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		statusbar.reorder_child(combo, 5)
 
 		for key, props in self.LINE_ENDINGS.iteritems():
-			item = Gtk.MenuItem(props['label'])
+			label = props['label']
+			item = Gtk.MenuItem(label)
 			setattr(item, self.LINE_ENDING_DATA, key)
 
-			combo.add_item(item, props['label'])
+			combo.add_item(item, label)
 
 			item.show()
 
