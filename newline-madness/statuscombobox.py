@@ -28,7 +28,7 @@ class StatusComboBox(Gtk.EventBox):
 	__gtype_name__ = 'StatusComboBox'
 
 	__gproperties__ = {
-		'label': (str, 'LABEL', 'The Label', None, GObject.PARAM_READWRITE)
+		'label': (str, 'LABEL', "The Label", None, GObject.PARAM_READWRITE)
 	}
 
 	__gsignals__ = {
@@ -44,16 +44,15 @@ class StatusComboBox(Gtk.EventBox):
 		super(StatusComboBox, self).__init__()
 
 		if not StatusComboBox._css:
-			style = '''
-* {
--GtkButton-default-border : 0;
--GtkButton-default-outside-border : 0;
--GtkButton-inner-border: 0;
--GtkWidget-focus-line-width : 0;
--GtkWidget-focus-padding : 0;
-padding: 1px 8px 2px 4px;
-}
-'''
+			style = """
+				* {
+					-GtkButton-default-border : 0;
+					-GtkButton-default-outside-border : 0;
+					-GtkButton-inner-border: 0;
+					-GtkWidget-focus-line-width : 0;
+					-GtkWidget-focus-padding : 0;
+					padding: 1px 8px 2px 4px;
+				}"""
 			StatusComboBox._css = Gtk.CssProvider()
 			StatusComboBox._css.load_from_data(style)
 
@@ -121,13 +120,13 @@ padding: 1px 8px 2px 4px;
 		if prop.name == 'label':
 			return self.get_label()
 		else:
-			raise AttributeError, 'unknown property %s' % prop.name
+			raise AttributeError("unknown property %s" % prop.name)
 
 	def do_set_property(self, prop, value):
 		if prop.name == 'label':
 			self.set_label(value)
 		else:
-			raise AttributeError, 'unknown property %s' % prop.name
+			raise AttributeError("unknown property %s" % prop.name)
 
 	def do_destroy(self):
 		if self._menu:
@@ -225,7 +224,7 @@ padding: 1px 8px 2px 4px;
 	# public functions
 
 	def set_label(self, label):
-		self._label.set_markup('  ' + label + ': ' if label is not None else '  ')
+		self._label.set_markup("  %s: " % label if label is not None else "  ")
 
 	def get_label(self):
 		return self._label.get_label()
