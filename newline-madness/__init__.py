@@ -118,7 +118,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		self._combo = combo
 
 		for doc in window.get_documents(): 
-			self.window_tab_added(window, Gedit.Tab.get_from_document(doc))
+			self.on_window_tab_added(window, Gedit.Tab.get_from_document(doc))
 
 		self.connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed', 'notify::state'), 'window')
 
@@ -130,7 +130,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		self.disconnect_handlers(window)
 
 		for doc in window.get_documents(): 
-			self.window_tab_removed(window, Gedit.Tab.get_from_document(doc))
+			self.on_window_tab_removed(window, Gedit.Tab.get_from_document(doc))
 
 		self.disconnect_handlers(self._combo)
 		super(Gtk.Container, window.get_statusbar()).remove(self._combo)
@@ -152,31 +152,31 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		self.set_sensitivity()
 		self.update_ui()
 
-	def window_active_tab_changed(self, window, tab):
+	def on_window_active_tab_changed(self, window, tab):
 		self.set_sensitivity()
 		self.update_ui()
 
-	def window_active_tab_state_changed(self, window):
+	def on_window_active_tab_state_changed(self, window):
 		self.set_sensitivity()
 
-	def window_tab_added(self, window, tab):
+	def on_window_tab_added(self, window, tab):
 		self.connect_handlers(tab.get_document(), ('notify::newline-type',), 'doc')
 
-	def window_tab_removed(self, window, tab):
+	def on_window_tab_removed(self, window, tab):
 		self.disconnect_handlers(tab.get_document())
 
-	def window_notify_state(self, window, prop):
+	def on_window_notify_state(self, window, prop):
 		self.set_sensitivity()
 
-	def doc_notify_newline_type(self, doc, prop):
+	def on_doc_notify_newline_type(self, doc, prop):
 		self.update_ui()
 
-	def action_activate(self, action):
+	def on_action_activate(self, action):
 		doc = self.window.get_active_document()
 		if doc and action.get_active():
 			self.set_document_newline(doc, action.get_current_value())
 
-	def combo_changed(self, combo, item):
+	def on_combo_changed(self, combo, item):
 		doc = self.window.get_active_document()
 		if doc:
 			self.set_document_newline(doc, getattr(item, self.LINE_ENDING_DATA))
@@ -246,7 +246,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 		for signal in signals:
 			if type(m).__name__ == 'str':
-				method = getattr(self, m + '_' + signal.replace('-', '_').replace('::', '_'))
+				method = getattr(self, 'on_' + m + '_' + signal.replace('-', '_').replace('::', '_'))
 			else:
 				method = m
 			l_ids.append(obj.connect(signal, method, *args))
