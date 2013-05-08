@@ -20,24 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import GObject, Gtk, Gedit
-from gettext import gettext as _
-from statuscombobox import StatusComboBox
-
-ui_str = '''
-<ui>
-	<menubar name="MenuBar">
-		<menu name="EditMenu" action="Edit">
-			<placeholder name="EditOps_6">
-				<menu name="NewlineMadnessPluginMenu" action="NewlineMadnessPluginMenu">
-					<menuitem name="NewlineMadnessPluginToLF" action="NewlineMadnessPluginToLF" />
-					<menuitem name="NewlineMadnessPluginToCR" action="NewlineMadnessPluginToCR" />
-					<menuitem name="NewlineMadnessPluginToCRLF" action="NewlineMadnessPluginToCRLF" />
-				</menu>
-			</placeholder>
-		</menu>
-	</menubar>
-</ui>
-'''
+from .statuscombobox import StatusComboBox
 
 class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 	__gtype_name__ = 'NewlineMadnessPlugin'
@@ -66,10 +49,6 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		}
 	}
 
-
-
-	# Plugin interface
-
 	def __init__(self):
 		GObject.Object.__init__(self)
 
@@ -78,6 +57,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 		# Menu
 		action_group = Gtk.ActionGroup('NewlineMadnessPluginActions')
+		action_group.set_translation_domain('gedit')
 		action = Gtk.Action('NewlineMadnessPluginMenu', _('Change Line Endings'), None, None)
 		action_group.add_action(action)
 		menu_action = action
@@ -93,6 +73,22 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 				action.join_group(first_action)
 
 			self.connect_handlers(action, ('activate',), 'action')
+
+		ui_str = '''
+		<ui>
+			<menubar name="MenuBar">
+				<menu name="EditMenu" action="Edit">
+					<placeholder name="EditOps_6">
+						<menu name="NewlineMadnessPluginMenu" action="NewlineMadnessPluginMenu">
+							<menuitem name="NewlineMadnessPluginToLF" action="NewlineMadnessPluginToLF" />
+							<menuitem name="NewlineMadnessPluginToCR" action="NewlineMadnessPluginToCR" />
+							<menuitem name="NewlineMadnessPluginToCRLF" action="NewlineMadnessPluginToCRLF" />
+						</menu>
+					</placeholder>
+				</menu>
+			</menubar>
+		</ui>
+		'''
 
 		manager = window.get_ui_manager()
 		manager.insert_action_group(action_group, -1)
@@ -156,10 +152,6 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		self.set_sensitivity()
 		self.update_ui()
 
-
-
-	# Callbacks
-
 	def window_active_tab_changed(self, window, tab):
 		self.set_sensitivity()
 		self.update_ui()
@@ -188,10 +180,6 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		doc = self.window.get_active_document()
 		if doc:
 			self.set_document_newline(doc, getattr(item, self.LINE_ENDING_DATA))
-
-
-
-	# Doers
 
 	def set_sensitivity(self):
 		window = self.window
@@ -251,10 +239,6 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		if doc:
 			doc.set_property('newline-type', newline)
 			doc.set_modified(True)
-
-
-
-	# Utilities
 
 	def connect_handlers(self, obj, signals, m, *args):
 		HANDLER_IDS = self.HANDLER_IDS
