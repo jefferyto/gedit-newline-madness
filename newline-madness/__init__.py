@@ -72,7 +72,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 			else:
 				action.join_group(first_action)
 
-			self.connect_handlers(action, ('activate',), 'action')
+			self._connect_handlers(action, ('activate',), 'action')
 
 		ui_str = '''
 		<ui>
@@ -110,7 +110,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 			item.show()
 
-		self.connect_handlers(combo, ('changed',), 'combo')
+		self._connect_handlers(combo, ('changed',), 'combo')
 
 		self._ui_id = ui_id
 		self._menu_action = menu_action
@@ -120,23 +120,23 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		for doc in window.get_documents(): 
 			self.on_window_tab_added(window, Gedit.Tab.get_from_document(doc))
 
-		self.connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed', 'notify::state'), 'window')
+		self._connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed', 'notify::state'), 'window')
 
 		self.do_update_state()
 
 	def do_deactivate(self):
 		window = self.window
 
-		self.disconnect_handlers(window)
+		self._disconnect_handlers(window)
 
 		for doc in window.get_documents(): 
 			self.on_window_tab_removed(window, Gedit.Tab.get_from_document(doc))
 
-		self.disconnect_handlers(self._combo)
+		self._disconnect_handlers(self._combo)
 		super(Gtk.Container, window.get_statusbar()).remove(self._combo)
 
 		for action in self._action_group.list_actions():
-			self.disconnect_handlers(action)
+			self._disconnect_handlers(action)
 
 		manager = window.get_ui_manager()
 		manager.remove_ui(self._ui_id)
@@ -149,39 +149,39 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		self._combo = None
 
 	def do_update_state(self):
-		self.set_sensitivity()
-		self.update_ui()
+		self._set_sensitivity()
+		self._update_ui()
 
 	def on_window_active_tab_changed(self, window, tab):
-		self.set_sensitivity()
-		self.update_ui()
+		self._set_sensitivity()
+		self._update_ui()
 
 	def on_window_active_tab_state_changed(self, window):
-		self.set_sensitivity()
+		self._set_sensitivity()
 
 	def on_window_tab_added(self, window, tab):
-		self.connect_handlers(tab.get_document(), ('notify::newline-type',), 'doc')
+		self._connect_handlers(tab.get_document(), ('notify::newline-type',), 'doc')
 
 	def on_window_tab_removed(self, window, tab):
-		self.disconnect_handlers(tab.get_document())
+		self._disconnect_handlers(tab.get_document())
 
 	def on_window_notify_state(self, window, prop):
-		self.set_sensitivity()
+		self._set_sensitivity()
 
 	def on_doc_notify_newline_type(self, doc, prop):
-		self.update_ui()
+		self._update_ui()
 
 	def on_action_activate(self, action):
 		doc = self.window.get_active_document()
 		if doc and action.get_active():
-			self.set_document_newline(doc, action.get_current_value())
+			self._set_document_newline(doc, action.get_current_value())
 
 	def on_combo_changed(self, combo, item):
 		doc = self.window.get_active_document()
 		if doc:
-			self.set_document_newline(doc, getattr(item, self.LINE_ENDING_DATA))
+			self._set_document_newline(doc, getattr(item, self.LINE_ENDING_DATA))
 
-	def set_sensitivity(self):
+	def _set_sensitivity(self):
 		window = self.window
 		tab = window.get_active_tab()
 		combo = self._combo
@@ -201,7 +201,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		else:
 			combo.hide()
 
-	def update_ui(self):
+	def _update_ui(self):
 		doc = self.window.get_active_document()
 
 		if doc:
@@ -217,30 +217,30 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 			# prevent recursion
 			for action in actions:
-				self.block_handlers(action)
+				self._block_handlers(action)
 
 			action = action_group.get_action(name)
 			action.set_active(True)
 
 			for action in actions:
-				self.unblock_handlers(action)
+				self._unblock_handlers(action)
 
 			# Combo
 			combo = self._combo
 
 			for item in combo.get_items():
 				if getattr(item, self.LINE_ENDING_DATA) == newline:
-					self.block_handlers(combo)
+					self._block_handlers(combo)
 					combo.set_item(item)
-					self.unblock_handlers(combo)
+					self._unblock_handlers(combo)
 					break
 
-	def set_document_newline(self, doc, newline):
+	def _set_document_newline(self, doc, newline):
 		if doc:
 			doc.set_property('newline-type', newline)
 			doc.set_modified(True)
 
-	def connect_handlers(self, obj, signals, m, *args):
+	def _connect_handlers(self, obj, signals, m, *args):
 		HANDLER_IDS = self.HANDLER_IDS
 		l_ids = getattr(obj, HANDLER_IDS) if hasattr(obj, HANDLER_IDS) else []
 
@@ -253,7 +253,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 		setattr(obj, HANDLER_IDS, l_ids)
 
-	def disconnect_handlers(self, obj):
+	def _disconnect_handlers(self, obj):
 		HANDLER_IDS = self.HANDLER_IDS
 		if hasattr(obj, HANDLER_IDS):
 			for l_id in getattr(obj, HANDLER_IDS):
@@ -261,13 +261,13 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 			delattr(obj, HANDLER_IDS)
 
-	def block_handlers(self, obj):
+	def _block_handlers(self, obj):
 		HANDLER_IDS = self.HANDLER_IDS
 		if hasattr(obj, HANDLER_IDS):
 			for l_id in getattr(obj, HANDLER_IDS):
 				obj.handler_block(l_id)
 
-	def unblock_handlers(self, obj):
+	def _unblock_handlers(self, obj):
 		HANDLER_IDS = self.HANDLER_IDS
 		if hasattr(obj, HANDLER_IDS):
 			for l_id in getattr(obj, HANDLER_IDS):
