@@ -118,7 +118,10 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		for doc in window.get_documents(): 
 			self.on_window_tab_added(window, Gedit.Tab.get_from_document(doc))
 
-		self._connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed', 'notify::state'), 'window')
+		self._connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed'), 'window')
+
+		if hasattr(Gedit.WindowState, 'SAVING_SESSION'):
+			self._connect_handlers(window, ('notify::state',), 'window')
 
 		self.do_update_state()
 
@@ -186,7 +189,8 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		sensitive = False
 
 		if tab:
-			not_window_saving_session = (window.get_state() & Gedit.WindowState.SAVING_SESSION) == 0
+			# Gedit.WindowState.SAVING_SESSION was removed in gedit 3.8
+			not_window_saving_session = (window.get_state() & Gedit.WindowState.SAVING_SESSION) == 0 if hasattr(Gedit.WindowState, 'SAVING_SESSION') else True
 			tab_state_normal = tab.get_state() is Gedit.TabState.STATE_NORMAL
 			tab_editable = tab.get_view().get_editable()
 
