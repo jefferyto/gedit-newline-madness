@@ -44,7 +44,7 @@ class StatusComboBox(Gtk.EventBox):
 		super(StatusComboBox, self).__init__()
 
 		if not StatusComboBox._css:
-			style = """
+			style = b"""
 				* {
 					-GtkButton-default-border : 0;
 					-GtkButton-default-outside-border : 0;
@@ -287,7 +287,7 @@ class StatusComboBox(Gtk.EventBox):
 			self.remove_padding_from_gedit_status_combo_box()
 
 			padding = frame.get_style_context().get_padding(Gtk.StateType.NORMAL)
-			css_str = '* { padding: %dpx %dpx %dpx %dpx; }' % (padding.top, padding.right, padding.bottom, padding.left)
+			css_str = ('* { padding: %dpx %dpx %dpx %dpx; }' % (padding.top, padding.right, padding.bottom, padding.left)).encode('ascii')
 			css = Gtk.CssProvider()
 			css.load_from_data(css_str)
 
