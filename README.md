@@ -17,8 +17,11 @@ gedit 2 users should use [v0.1.0][] (requires at least gedit 2.29.5).
 ## Installation ##
 
 1.  Download the source code (as [zip][] or [tar.gz][]) and extract.
-2.  Copy `newline-madness.plugin` and the `newline-madness` folder into
-    `~/.local/share/gedit/plugins` (create if it does not exist).
+2.  Copy the `newline-madness` folder and the appropriate `.plugin` file
+    into `~/.local/share/gedit/plugins` (create if it does not exist):
+    *   For gedit 3.6 and earlier, copy `newline-madness.plugin.python2`
+        and rename to `newline-madness.plugin`.
+    *   For gedit 3.8 and later, copy `newline-madness.plugin`.
 3.  Restart gedit, select **Edit > Preferences** (or
     **gedit > Preferences** on Mac), and enable the plugin in the
     **Plugins** tab.
