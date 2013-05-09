@@ -1,3 +1,7 @@
+v0.3.3: (2013-05-09):
+* Gedit 3.8 / Python 3 compatibility
+* Minor tweaks
+
 v0.3.2: (2013-04-26):
 * Bug fix: use normal Python attributes instead of get_data/set_data
 

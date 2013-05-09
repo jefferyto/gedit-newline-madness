@@ -28,7 +28,7 @@ class StatusComboBox(Gtk.EventBox):
 	__gtype_name__ = 'StatusComboBox'
 
 	__gproperties__ = {
-		'label': (str, 'LABEL', 'The Label', None, GObject.PARAM_READWRITE)
+		'label': (str, 'LABEL', "The Label", None, GObject.PARAM_READWRITE)
 	}
 
 	__gsignals__ = {
@@ -44,16 +44,15 @@ class StatusComboBox(Gtk.EventBox):
 		super(StatusComboBox, self).__init__()
 
 		if not StatusComboBox._css:
-			style = '''
-* {
--GtkButton-default-border : 0;
--GtkButton-default-outside-border : 0;
--GtkButton-inner-border: 0;
--GtkWidget-focus-line-width : 0;
--GtkWidget-focus-padding : 0;
-padding: 1px 8px 2px 4px;
-}
-'''
+			style = b"""
+				* {
+					-GtkButton-default-border : 0;
+					-GtkButton-default-outside-border : 0;
+					-GtkButton-inner-border: 0;
+					-GtkWidget-focus-line-width : 0;
+					-GtkWidget-focus-padding : 0;
+					padding: 1px 8px 2px 4px;
+				}"""
 			StatusComboBox._css = Gtk.CssProvider()
 			StatusComboBox._css.load_from_data(style)
 
@@ -121,13 +120,13 @@ padding: 1px 8px 2px 4px;
 		if prop.name == 'label':
 			return self.get_label()
 		else:
-			raise AttributeError, 'unknown property %s' % prop.name
+			raise AttributeError("unknown property %s" % prop.name)
 
 	def do_set_property(self, prop, value):
 		if prop.name == 'label':
 			self.set_label(value)
 		else:
-			raise AttributeError, 'unknown property %s' % prop.name
+			raise AttributeError("unknown property %s" % prop.name)
 
 	def do_destroy(self):
 		if self._menu:
@@ -225,7 +224,7 @@ padding: 1px 8px 2px 4px;
 	# public functions
 
 	def set_label(self, label):
-		self._label.set_markup('  ' + label + ': ' if label is not None else '  ')
+		self._label.set_markup("  %s: " % label if label is not None else "  ")
 
 	def get_label(self):
 		return self._label.get_label()
@@ -274,21 +273,25 @@ padding: 1px 8px 2px 4px;
 
 	# hack /hack/ HACK
 	def clone_padding_from_gedit_status_combo_box(self, parent):
+		combo = None
 		frame = None
-		for combo in parent.get_children():
-			if combo.__gtype__.name == 'GeditStatusComboBox':
-				for child in combo.get_children():
-					if isinstance(child, Gtk.Frame):
-						frame = child
-						break
-				if frame:
+
+		for child in parent.get_children():
+			if child.__gtype__.name == 'GeditStatusComboBox':
+				combo = child
+				break
+
+		if combo:
+			for child in combo.get_children():
+				if isinstance(child, Gtk.Frame):
+					frame = child
 					break
 
 		if frame:
 			self.remove_padding_from_gedit_status_combo_box()
 
-			padding = frame.get_style_context().get_padding(Gtk.StateType.NORMAL)
-			css_str = '* { padding: %dpx %dpx %dpx %dpx; }' % (padding.top, padding.right, padding.bottom, padding.left)
+			padding = frame.get_style_context().get_padding(Gtk.StateFlags.NORMAL)
+			css_str = ('* { padding: %dpx %dpx %dpx %dpx; }' % (padding.top, padding.right, padding.bottom, padding.left)).encode('ascii')
 			css = Gtk.CssProvider()
 			css.load_from_data(css_str)
 
@@ -303,4 +306,3 @@ padding: 1px 8px 2px 4px;
 			self._button.get_style_context().remove_provider(css)
 			self._frame.get_style_context().remove_provider(css)
 			self._padding = None
-
