@@ -8,4 +8,4 @@ Description=Change newline type for the current document
 Authors=Jeffery To <jeffery.to@gmail.com>
 Copyright=Copyright © 2010-2013 Jeffery To
 Website=https://github.com/jefferyto/gedit-newline-madness
-Version=0.3.2
+Version=0.3.3

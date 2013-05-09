@@ -2,7 +2,7 @@
 
 Change newline type for the current document  
 <https://github.com/jefferyto/gedit-newline-madness>  
-v0.3.2
+v0.3.3
 
 All bug reports, feature requests and miscellaneous comments are welcome
 at the [project issue tracker][].

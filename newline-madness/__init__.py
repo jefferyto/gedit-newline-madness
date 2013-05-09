@@ -274,4 +274,3 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		if hasattr(obj, HANDLER_IDS):
 			for l_id in getattr(obj, HANDLER_IDS):
 				obj.handler_unblock(l_id)
-

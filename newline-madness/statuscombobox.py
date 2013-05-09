@@ -306,4 +306,3 @@ class StatusComboBox(Gtk.EventBox):
 			self._button.get_style_context().remove_provider(css)
 			self._frame.get_style_context().remove_provider(css)
 			self._padding = None
-
