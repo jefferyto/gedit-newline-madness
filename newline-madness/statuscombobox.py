@@ -273,20 +273,24 @@ class StatusComboBox(Gtk.EventBox):
 
 	# hack /hack/ HACK
 	def clone_padding_from_gedit_status_combo_box(self, parent):
+		combo = None
 		frame = None
-		for combo in parent.get_children():
-			if combo.__gtype__.name == 'GeditStatusComboBox':
-				for child in combo.get_children():
-					if isinstance(child, Gtk.Frame):
-						frame = child
-						break
-				if frame:
+
+		for child in parent.get_children():
+			if child.__gtype__.name == 'GeditStatusComboBox':
+				combo = child
+				break
+
+		if combo:
+			for child in combo.get_children():
+				if isinstance(child, Gtk.Frame):
+					frame = child
 					break
 
 		if frame:
 			self.remove_padding_from_gedit_status_combo_box()
 
-			padding = frame.get_style_context().get_padding(Gtk.StateType.NORMAL)
+			padding = frame.get_style_context().get_padding(Gtk.StateFlags.NORMAL)
 			css_str = ('* { padding: %dpx %dpx %dpx %dpx; }' % (padding.top, padding.right, padding.bottom, padding.left)).encode('ascii')
 			css = Gtk.CssProvider()
 			css.load_from_data(css_str)
