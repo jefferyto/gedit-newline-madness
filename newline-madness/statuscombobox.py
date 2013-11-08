@@ -54,7 +54,11 @@ class StatusComboBox(Gtk.EventBox):
 					padding: 1px 8px 2px 4px;
 				}"""
 			StatusComboBox._css = Gtk.CssProvider()
-			StatusComboBox._css.load_from_data(style)
+			try:
+				StatusComboBox._css.load_from_data(style)
+			except TypeError:
+				# GTK+ 3.0 requires the length parameter
+				StatusComboBox._css.load_from_data(style, -1)
 
 		self.set_visible_window(True)
 
@@ -67,7 +71,8 @@ class StatusComboBox(Gtk.EventBox):
 
 		self.__set_shadow_type()
 
-		self._hbox = Gtk.Box(Gtk.Orientation.HORIZONTAL, 3)
+		self._hbox = Gtk.HBox()
+		self._hbox.set_spacing(3)
 		self._hbox.show()
 
 		self.add(self._frame)
@@ -154,7 +159,7 @@ class StatusComboBox(Gtk.EventBox):
 	def __menu_deactivate(self, menu):
 		self._button.set_active(False)
 
-	def __menu_position_func(self, menu, data):
+	def __menu_position_func(self, menu, *args):
 		request = menu.get_preferred_size()[0]
 
 		# get the origin...
@@ -293,7 +298,11 @@ class StatusComboBox(Gtk.EventBox):
 			padding = frame.get_style_context().get_padding(Gtk.StateFlags.NORMAL)
 			css_str = ('* { padding: %dpx %dpx %dpx %dpx; }' % (padding.top, padding.right, padding.bottom, padding.left)).encode('ascii')
 			css = Gtk.CssProvider()
-			css.load_from_data(css_str)
+			try:
+				css.load_from_data(css_str)
+			except TypeError:
+				# GTK+ 3.0 requires the length parameter
+				css.load_from_data(css_str, -1)
 
 			self._button.get_style_context().add_provider(css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 			self._frame.get_style_context().add_provider(css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
