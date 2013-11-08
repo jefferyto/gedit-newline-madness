@@ -21,13 +21,12 @@
 
 from gi.repository import GObject, Gtk, Gedit
 from .statuscombobox import StatusComboBox
+from .utils import connect_handlers, disconnect_handlers, block_handlers, unblock_handlers
 
 class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 	__gtype_name__ = 'NewlineMadnessPlugin'
 
 	window = GObject.property(type=Gedit.Window)
-
-	HANDLER_IDS = 'NewlineMadnessPluginHandlerIds'
 
 	LINE_ENDING_DATA = 'NewlineMadnessPluginLineEndingData'
 
@@ -70,7 +69,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 			else:
 				action.join_group(first_action)
 
-			self._connect_handlers(action, ('activate',), 'action')
+			connect_handlers(self, action, ('activate',), 'action')
 
 		ui_str = """
 			<ui>
@@ -108,7 +107,7 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 			item.show()
 
-		self._connect_handlers(combo, ('changed',), 'combo')
+		connect_handlers(self, combo, ('changed',), 'combo')
 
 		self._ui_id = ui_id
 		self._menu_action = menu_action
@@ -118,26 +117,26 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		for doc in window.get_documents(): 
 			self.on_window_tab_added(window, Gedit.Tab.get_from_document(doc))
 
-		self._connect_handlers(window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed'), 'window')
+		connect_handlers(self, window, ('active-tab-changed', 'active-tab-state-changed', 'tab-added', 'tab-removed'), 'window')
 
 		if hasattr(Gedit.WindowState, 'SAVING_SESSION'):
-			self._connect_handlers(window, ('notify::state',), 'window')
+			connect_handlers(self, window, ('notify::state',), 'window')
 
 		self.do_update_state()
 
 	def do_deactivate(self):
 		window = self.window
 
-		self._disconnect_handlers(window)
+		disconnect_handlers(self, window)
 
 		for doc in window.get_documents(): 
 			self.on_window_tab_removed(window, Gedit.Tab.get_from_document(doc))
 
-		self._disconnect_handlers(self._combo)
+		disconnect_handlers(self, self._combo)
 		super(Gtk.Container, window.get_statusbar()).remove(self._combo)
 
 		for action in self._action_group.list_actions():
-			self._disconnect_handlers(action)
+			disconnect_handlers(self, action)
 
 		manager = window.get_ui_manager()
 		manager.remove_ui(self._ui_id)
@@ -161,10 +160,10 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 		self._set_sensitivity()
 
 	def on_window_tab_added(self, window, tab):
-		self._connect_handlers(tab.get_document(), ('notify::newline-type',), 'doc')
+		connect_handlers(self, tab.get_document(), ('notify::newline-type',), 'doc')
 
 	def on_window_tab_removed(self, window, tab):
-		self._disconnect_handlers(tab.get_document())
+		disconnect_handlers(self, tab.get_document())
 
 	def on_window_notify_state(self, window, prop):
 		self._set_sensitivity()
@@ -219,58 +218,25 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 			# prevent recursion
 			for action in actions:
-				self._block_handlers(action)
+				block_handlers(self, action)
 
 			action = action_group.get_action(name)
 			action.set_active(True)
 
 			for action in actions:
-				self._unblock_handlers(action)
+				unblock_handlers(self, action)
 
 			# Combo
 			combo = self._combo
 
 			for item in combo.get_items():
 				if getattr(item, self.LINE_ENDING_DATA) == newline:
-					self._block_handlers(combo)
+					block_handlers(self, combo)
 					combo.set_item(item)
-					self._unblock_handlers(combo)
+					unblock_handlers(self, combo)
 					break
 
 	def _set_document_newline(self, doc, newline):
 		if doc:
 			doc.set_property('newline-type', newline)
 			doc.set_modified(True)
-
-	def _connect_handlers(self, obj, signals, m, *args):
-		HANDLER_IDS = self.HANDLER_IDS
-		l_ids = getattr(obj, HANDLER_IDS) if hasattr(obj, HANDLER_IDS) else []
-
-		for signal in signals:
-			if type(m).__name__ == 'str':
-				method = getattr(self, 'on_' + m + '_' + signal.replace('-', '_').replace('::', '_'))
-			else:
-				method = m
-			l_ids.append(obj.connect(signal, method, *args))
-
-		setattr(obj, HANDLER_IDS, l_ids)
-
-	def _disconnect_handlers(self, obj):
-		HANDLER_IDS = self.HANDLER_IDS
-		if hasattr(obj, HANDLER_IDS):
-			for l_id in getattr(obj, HANDLER_IDS):
-				obj.disconnect(l_id)
-
-			delattr(obj, HANDLER_IDS)
-
-	def _block_handlers(self, obj):
-		HANDLER_IDS = self.HANDLER_IDS
-		if hasattr(obj, HANDLER_IDS):
-			for l_id in getattr(obj, HANDLER_IDS):
-				obj.handler_block(l_id)
-
-	def _unblock_handlers(self, obj):
-		HANDLER_IDS = self.HANDLER_IDS
-		if hasattr(obj, HANDLER_IDS):
-			for l_id in getattr(obj, HANDLER_IDS):
-				obj.handler_unblock(l_id)

@@ -36,6 +36,12 @@ To select a newline type for the current document, either:
 
 Note that changing the newline type cannot be undone with `Undo` (yet).
 
+## Development ##
+
+The code in `newline-madness/utils` comes from [python-gtk-utils][];
+changes should ideally be contributed to that project, then pulled back
+into this one with `git subtree pull`.
+
 ## Credits ##
 
 Based in part on:
@@ -54,4 +60,5 @@ Available under GNU General Public License version 3
 [zip]: https://github.com/jefferyto/gedit-newline-madness/archive/master.zip
 [tar.gz]: https://github.com/jefferyto/gedit-newline-madness/archive/master.tar.gz
 [v0.1.0]: https://github.com/jefferyto/gedit-newline-madness/archive/v0.1.0.zip
+[python-gtk-utils]: https://github.com/jefferyto/python-gtk-utils
 [Auto Tab]: http://code.google.com/p/gedit-autotab/
