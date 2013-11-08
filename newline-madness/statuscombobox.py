@@ -159,7 +159,7 @@ class StatusComboBox(Gtk.EventBox):
 	def __menu_deactivate(self, menu):
 		self._button.set_active(False)
 
-	def __menu_position_func(self, menu, data):
+	def __menu_position_func(self, menu, *args):
 		request = menu.get_preferred_size()[0]
 
 		# get the origin...
