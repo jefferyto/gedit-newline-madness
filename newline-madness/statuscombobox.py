@@ -71,7 +71,8 @@ class StatusComboBox(Gtk.EventBox):
 
 		self.__set_shadow_type()
 
-		self._hbox = Gtk.Box(Gtk.Orientation.HORIZONTAL, 3)
+		self._hbox = Gtk.HBox()
+		self._hbox.set_spacing(3)
 		self._hbox.show()
 
 		self.add(self._frame)

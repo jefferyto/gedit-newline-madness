@@ -100,7 +100,8 @@ class NewlineMadnessPlugin(GObject.Object, Gedit.WindowActivatable):
 
 		for key, props in self.LINE_ENDINGS.items():
 			label = props['label']
-			item = Gtk.MenuItem(label)
+			item = Gtk.MenuItem()
+			item.set_label(label)
 			setattr(item, self.LINE_ENDING_DATA, key)
 
 			combo.add_item(item, label)
